@@ -1,0 +1,86 @@
+---
+title: "ANA515 Assignment 2"
+author: "Fang Tham"
+date: '2022-09-17'
+output: word_document
+---
+
+Section 1: Description of the data
+
+The data set from the flying etiquette survey aims to understand what people think of flying etiquettes. The data collected is collected by Walt Hickey who was the chief culture writer of FiveThirtyEight. Since reading many articles about air passengers' confrontations amongst each other, he decided to run a SuveyMonkey Audience poll with air passengers to inquire about flying etiquettes. Data from 1040 respondents were collected, 874 who had experience flying. He included questions about reclining seats, using the bath room, switching seats, bringing babies on flights etc. We are interested to know the percentage of people who thinks that certain etiquettes should be done a certain way.
+
+```{r setup, include=FALSE}
+library(knitr)
+library(dplyr)
+library(bslib)
+library(tidyverse)
+```
+
+Section 2: Reading the data.
+```{r data, include=TRUE}
+#Section 2: Reading into the data, the read_csv from readr package that is loaded through tidyverse is used.
+url <- 'https://raw.githubusercontent.com/fivethirtyeight/data/master/flying-etiquette-survey/flying-etiquette.csv'
+etiquette <- read.csv(url(url))
+```
+
+Section3: Cleaning the data. I cleaned the data by renaming some columns of interest.
+```{r clean, include=TRUE}
+#clean data by renaming the columns
+colnames(etiquette)[colnames (etiquette) == 'How.tall.are.you.'] <- 'Height'
+colnames(etiquette)[colnames (etiquette) == 'Is.itrude.to.recline.your.seat.on.a.plane.'] <- 'Recline_Rude'
+colnames(etiquette)[colnames (etiquette) == 'Do.you.ever.recline.your.seat.when.you.fly.'] <- 'Recline_Freq'
+```
+
+Section 4: This is to inspect the characteristics of my data
+
+This data set has `r nrow(etiquette)` and `r ncol(etiquette)`. The names of the columns and a brief description of each are in the table below:
+
+```{r table, echo=TRUE}
+#The table below shows a summary of what each column means.
+table_description <- data.frame(Names = c("Recline_Freq", "Height", "Recline_Rude", "Age", "Gender"),
+  Description = c(
+    "Frequency of reclining their seats when they fly", 
+    "Height of respondent",
+    "Whether it's rude for one to recline their seat",
+    "Age of respondent", "Gender of respondent"))
+
+#Print the table
+print(table_description)
+```
+
+This is the summary statistics for 4 columns. I have selected to look at the recline frequency, height, age, gender, and seeing if those factors relate to whether people think reclining chairs on an airplane is rude
+
+```{r char, echo=TRUE}
+#I am selecting 4 columns that I am interested in by creating a new dataframe from my subset. I kept the respondentID in as as an ID tag:
+newetq <- subset(etiquette, select=c(1,3,4,13,23,24))
+
+#I am changing the class of all columns from characters to factors
+newetq2 <- as.data.frame(unclass(newetq),
+                         stringsAsFactors = TRUE)
+str(newetq2)
+```
+
+Now, I am able to analyze the frequency of each survey result. I first run a general summary of all my columns of interest. In this case, the missing cells do not affect our data analysis as we are calculating frequencies and running cross tab analysis. It will not affect the descriptive analysis, so I have decided to leave the missing rows in the data.
+
+```{r sum, echo=TRUE}
+etqsum <- summary(newetq2)
+print(etqsum)
+```
+
+Then, I perform a cross tab analysis to observe if different genders had different opinions on reclining seats. I also looked into whether heights affected their opinions on reclining the seats. I then looked at whether people of different ages had opinions on whether reclining seats is rude
+
+```{r xtab, echo=TRUE}
+crosstab_genderrecline <- xtabs(~ Gender + Recline_Freq, data=newetq2)
+crosstab_heightrecline <- xtabs(~ Height + Recline_Freq, data=newetq2)
+crosstab_agerude <- xtabs(~ Age + Recline_Rude, data=newetq2)
+
+#I'll now convert the cross tabulation counts to percentages by column or row and round it to 0 decimal points
+Propcrosstab_genderrecline <- round(100 * prop.table(crosstab_genderrecline, 1), 0)
+Propcrosstab_heightrecline<- round(100 * prop.table(crosstab_heightrecline, 1), 0)
+Propcrosstab_agerude <- round(100 * prop.table(crosstab_agerude, 1), 0)
+print(Propcrosstab_genderrecline)
+print(Propcrosstab_heightrecline)
+print(Propcrosstab_agerude)
+```
+
+In summary, there was no differences between the likelihood of a gender reclining the seat or not. Both females (24%) and males (27%) were most likely to recline their seats "once in a while". When it comes to height, it was apparent that people who were 6'6" and above either "Usually" (50%) or "Always" (50%) recline their seats. Majority (33%) of the people who were under 5 Ft. said that they only recline their seats once in a while. When we looked at whether there were certain age groups that thought reclining seats were rude, there wasn't a significant differences between the opinions of each age group. Out of the 3 selections of "No, not rude at all, Yes somewhat rude and Yes very rude), most people(48%) selected "No not rude at all". 
